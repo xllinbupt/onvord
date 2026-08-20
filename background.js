@@ -1,3 +1,15 @@
+try {
+    importScripts('commercial-config.js');
+} catch (e) {
+    console.warn('commercial-config.js load failed:', e);
+}
+
+try {
+    importScripts('commercial.js');
+} catch (e) {
+    console.warn('commercial.js load failed:', e);
+}
+
 // Onvord Background Service Worker — Phase 1-3: Block-based Timeline Engine
 
 /* ── Constants ── */
@@ -15,8 +27,8 @@ let state = {
     pausedDuration: 0,
     pauseStartTime: 0,
     startUrl: '',
-    sttProvider: 'aliyun',
-    language: 'auto',
+    sttProvider: 'managed',
+    language: 'zh-CN',
 
     // Block-based timeline
     timeline: [],        // finalized blocks
@@ -268,12 +280,27 @@ async function startRecording() {
         chrome.runtime.sendMessage({ type: 'RESTRICTED_PAGE', url: activeTab.url }).catch(() => {});
         return { success: false, reason: 'restricted-page' };
     }
-    const settings = await chrome.storage.local.get(['sttProvider', 'deepgramLang']);
-    const sttProvider = ['deepgram', 'aliyun'].includes(settings.sttProvider)
-        ? settings.sttProvider
-        : 'aliyun';
-    // Keep metadata aligned with explicit settings instead of browser locale inference.
-    const language = settings.deepgramLang === 'en-US' ? 'en-US' : 'zh-CN';
+
+    const commercial = globalThis.OnvordCommercial;
+    const rawSettings = await chrome.storage.local.get(commercial?.STORAGE_KEYS || []);
+    const commercialSettings = commercial?.fixedCommercialSettings
+        ? commercial.fixedCommercialSettings(rawSettings)
+        : rawSettings;
+    const hasFreshValidatedAccess = commercial?.hasFreshRecordingAccessValidation
+        ? commercial.hasFreshRecordingAccessValidation(commercialSettings)
+        : false;
+    const entitlement = hasFreshValidatedAccess
+        ? { ok: true, hasAccess: true, reason: 'recent-validation' }
+        : commercial?.ensureRecordingAccess
+            ? await commercial.ensureRecordingAccess(commercialSettings)
+            : { ok: false, hasAccess: false, reason: 'commercial-helper-missing' };
+
+    if (!entitlement.ok || !entitlement.hasAccess) {
+        return { success: false, reason: 'commercial-access-required' };
+    }
+
+    const sttProvider = commercialSettings.commercialLastSpeechProvider || 'managed';
+    const language = commercialSettings.commercialLanguage === 'en-US' ? 'en-US' : 'zh-CN';
 
     state = {
         recording: true,
@@ -425,11 +452,7 @@ function actionDesc(ev) {
         case 'input': return `在 ${ev.target?.description || '输入框'} 中输入 "${(ev.value || '').substring(0, 40)}"`;
         case 'navigate':
         case 'navigation': return `导航到 ${ev.pageTitle || ev.url}`;
-        case 'select':
-            if (String(ev.target?.tag || '').toLowerCase() === 'select') {
-                return `在 ${ev.target?.description || '下拉框'} 中选择 "${(ev.value || '').substring(0, 40)}"`;
-            }
-            return `选择文字「${(ev.value || '').substring(0, 40)}」`;
+        case 'select': return `选择文字「${(ev.value || '').substring(0, 40)}」`;
         case 'keypress': return `按下 ${ev.key || ev.value || '快捷键'}`;
         case 'scroll': return `页面${direction}滚动 ${distance}px`;
         default: return ev.actionType;
@@ -651,7 +674,7 @@ function generateSOP() {
             start_time: state.startTime ? new Date(state.startTime).toISOString() : now.toISOString(),
             duration_seconds: Math.round(totalDuration / 1000),
             start_url: state.startUrl,
-            stt_provider: state.sttProvider || 'aliyun',
+            stt_provider: state.sttProvider || 'managed',
             language: state.language,
             environment: {
                 user_agent: '',  // filled in sidepanel/export
@@ -910,9 +933,9 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
             state.pendingScrolls = recovery.pendingScrolls || [];
             state.startTime = recovery.startTime;
             state.startUrl = recovery.startUrl;
-            state.sttProvider = ['deepgram', 'aliyun'].includes(recovery.sttProvider)
+            state.sttProvider = ['aliyun', 'managed'].includes(recovery.sttProvider)
                 ? recovery.sttProvider
-                : 'aliyun';
+                : 'managed';
             state.language = recovery.language;
             // Account for crash gap as paused duration
             const crashGap = Date.now() - (recovery.savedAt || Date.now());

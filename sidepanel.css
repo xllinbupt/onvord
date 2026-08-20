@@ -92,6 +92,16 @@ body {
   display: flex;
 }
 
+#view-idle {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 22px;
+}
+
+#view-idle > * {
+  flex-shrink: 0;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -328,6 +338,184 @@ body {
 .settings-link:hover {
   color: var(--ac);
   text-decoration: underline;
+}
+
+.btn-sm {
+  min-height: 36px;
+  padding: 9px 12px;
+  font-size: 12px;
+  border-radius: 11px;
+}
+
+.commercial-banner {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(196, 211, 226, 0.94);
+  background:
+    radial-gradient(circle at 88% 14%, rgba(47, 128, 255, 0.16) 0%, transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 249, 255, 0.98));
+  border-radius: 22px;
+  box-shadow: 0 14px 30px rgba(12, 27, 61, 0.09);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+}
+
+.commercial-banner::after {
+  content: "";
+  position: absolute;
+  inset: auto -44px -58px auto;
+  width: 150px;
+  height: 150px;
+  border-radius: 999px;
+  background: rgba(11, 95, 255, 0.08);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.commercial-banner.is-subscribed {
+  background:
+    radial-gradient(circle at 88% 14%, rgba(31, 157, 104, 0.14) 0%, transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 252, 248, 0.98));
+}
+
+.commercial-banner.is-expired,
+.commercial-banner.is-upgrade {
+  background:
+    radial-gradient(circle at 88% 14%, rgba(255, 166, 0, 0.15) 0%, transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 250, 242, 0.98));
+}
+
+.commercial-banner.is-error {
+  background:
+    radial-gradient(circle at 88% 14%, rgba(229, 72, 77, 0.11) 0%, transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 246, 247, 0.98));
+}
+
+.commercial-banner-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.commercial-kicker {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--rf);
+  border: 1px solid #c8d6e7;
+  background: rgba(255, 255, 255, 0.88);
+  color: #33506e;
+  padding: 4px 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+  font-family: var(--f-mono);
+}
+
+.commercial-orbit {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.16) 38%, transparent 40%),
+    linear-gradient(135deg, rgba(11, 95, 255, 0.22) 0%, rgba(47, 128, 255, 0.06) 100%);
+  border: 1px solid rgba(164, 190, 220, 0.5);
+}
+
+.commercial-banner-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.commercial-title {
+  font-family: var(--f-title);
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.16;
+  letter-spacing: -0.03em;
+  color: #102f50;
+  flex: 1;
+}
+
+.commercial-status {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: 30px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(163, 181, 202, 0.68);
+  background: rgba(255, 255, 255, 0.78);
+  font-size: 11px;
+  font-weight: 700;
+  color: #274768;
+  text-align: center;
+}
+
+.commercial-status.warn {
+  color: #9a5700;
+  border-color: rgba(205, 162, 64, 0.45);
+  background: rgba(255, 245, 222, 0.9);
+}
+
+.commercial-status.err {
+  color: var(--dn);
+  border-color: rgba(229, 72, 77, 0.32);
+  background: rgba(255, 240, 241, 0.88);
+}
+
+.commercial-copy {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.commercial-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.commercial-highlight {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 217, 234, 0.92);
+  background: rgba(255, 255, 255, 0.82);
+  color: #2b4d70;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.commercial-highlight::before {
+  content: "✦";
+  color: var(--ac);
+  font-size: 11px;
+}
+
+.commercial-note {
+  font-size: 11px;
+  color: var(--muted-soft);
+  line-height: 1.65;
+}
+
+.commercial-banner-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.commercial-banner-actions .btn {
+  flex: 1;
+}
+
+.commercial-banner.is-subscribed .btn-ghost {
+  background: rgba(255, 255, 255, 0.92);
 }
 
 /* ===== RECORDING ===== */

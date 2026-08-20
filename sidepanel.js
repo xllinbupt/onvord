@@ -2,6 +2,8 @@
 (function () {
     'use strict';
 
+    const Commercial = globalThis.OnvordCommercial;
+
     let currentView = 'idle';
     let startTime = 0;
     let timer = null;
@@ -32,6 +34,13 @@
     const micStatusEl = $('mic-status');
     const volIndicator = $('vol-indicator');
     const volBars = volIndicator ? Array.from(volIndicator.querySelectorAll('.vol-bar')) : [];
+    const commercialBannerEl = $('commercial-banner');
+    const commercialStatusEl = $('commercial-status');
+    const commercialTitleEl = $('commercial-title');
+    const commercialCopyEl = $('commercial-copy');
+    const commercialBannerActionsEl = commercialBannerEl?.querySelector('.commercial-banner-actions');
+    const btnCommercialCheckout = $('btn-commercial-checkout');
+    const btnCommercialPortal = $('btn-commercial-portal');
     const uiLocale = /^zh\b/i.test(navigator.language || '') ? 'zh' : 'en';
     const I18N = {
         zh: {
@@ -41,7 +50,7 @@
             inst3: '操作浏览器，同时语音讲解',
             inst4: '完成后生成 SOP，发送给 AI',
             startRecording: '开始录制',
-            settingsLink: '语音识别设置',
+            settingsLink: '设置',
             recRecording: '录制中',
             recDone: '录制完成',
             recPaused: '已暂停',
@@ -64,42 +73,55 @@
             keypressFallback: '快捷键',
             actionClick: '点击 {target}',
             actionInput: '输入「{value}」',
-            actionInputWithTarget: '在 {target} 中输入「{value}」',
-            actionInputTargetOnly: '在 {target} 中输入',
             actionScroll: '滚动',
             actionScrollMerged: '滚动（合并 {count} 次）',
             actionSelect: '选择「{value}」',
-            actionSelectWithTarget: '在 {target} 中选择「{value}」',
-            actionSelectTargetOnly: '在 {target} 中选择',
             actionClickElement: '点击元素',
             actionInputShort: '输入',
             actionSelectShort: '选择',
             actionNavigate: '页面跳转',
             clickPointScreenshot: '步骤 {step} 截图',
-            startNeedKey: '请先设置 API Key',
+            startNeedKey: '服务未就绪',
+            startNeedBackend: '服务暂不可用',
+            startNeedSession: '连接已失效',
+            startNeedManaged: '官方语音未就绪',
+            startNeedSubscription: '请先开通订阅',
+            startNeedGoogle: '使用 Google 登录',
+            startNeedGoogleBusy: '正在打开 Google 登录…',
             startNeedMic: '开启麦克风权限',
             startProviderUnsupported: '当前语音服务暂不支持',
             initStt: '初始化语音识别…',
             toastWsDisconnected: '语音连接已断开，请暂停后继续重连',
-            toastNeedSetupKey: '请先在设置里配置当前语音服务凭证',
+            toastNeedSetupKey: '语音服务暂时不可用，请稍后再试',
+            toastNeedBackend: '当前服务暂不可用，请稍后再试',
+            toastNeedSession: '连接已失效，请重新打开 Onvord 后再试',
+            toastNeedManaged: '语音服务暂时不可用，请稍后再试',
+            toastNeedSubscription: '7 天试用已结束，请订阅后继续录制',
+            toastCheckoutMissing: '尚未配置支付页链接',
+            toastPortalMissing: '尚未配置订阅管理链接',
+            toastCheckoutLoginRequired: '订阅前请先登录 Google',
+            toastCheckoutLoginContinue: '已连接 Google，正在继续打开订阅页面',
+            toastGoogleSigninFailed: 'Google 登录失败，请稍后重试',
+            toastGoogleSigninCancelled: '你已取消 Google 登录',
+            toastGoogleSigninSuccess: '已连接 Google，现在可以开始使用了',
+            toastSessionExpired: '当前登录态已失效，请重新登录后再试',
+            toastSpeechSessionFailed: '暂时无法开始语音识别，请稍后再试',
             toastMicDenied: '麦克风权限未授予，无法开始录制',
             toastNoMic: '未检测到麦克风设备，无法开始录制',
             toastMicBusy: '麦克风暂不可用（可能被占用），无法开始录制',
-            toastKeyInvalid: 'Deepgram API Key 无效，请在设置中更新后重试',
-            toastNetwork: '无法连接 Deepgram（网络或 DNS 问题）',
-            toastAliyunKeyInvalid: '阿里云 API Key 无效，或与区域不匹配，请在设置中检查后重试',
-            toastAliyunKeyFormat: '阿里云 API Key 含非法字符（如中文/全角符号），请重新复制粘贴',
-            toastAliyunNetwork: '无法连接阿里云（网络或 DNS 问题）',
-            toastAliyunAuthRule: '浏览器未加载阿里云 WebSocket 鉴权头规则，请重载扩展后重试',
-            toastAliyunWsHandshake: '阿里云鉴权通过但实时连接握手失败，已尝试多种连接方式。请切换区域后重试',
-            toastAliyunInitFailed: '阿里云实时语音初始化失败，请检查区域设置；若仍失败，请先切回 Deepgram',
+            toastAliyunKeyInvalid: '语音服务鉴权失败，请稍后重试',
+            toastAliyunKeyFormat: '语音服务初始化失败，请重试',
+            toastAliyunNetwork: '无法连接语音服务，请检查网络后重试',
+            toastAliyunAuthRule: '语音服务初始化失败，请重载扩展后重试',
+            toastAliyunWsHandshake: '语音服务连接失败，请稍后重试',
+            toastAliyunInitFailed: '语音服务初始化失败，请稍后重试',
             toastInitFailed: '语音识别初始化失败，无法开始录制',
             toastStartFailed: '启动失败',
             generating: '生成中…',
             toastGenerateFailed: '生成 SOP 失败',
             toastGenerateError: '生成失败',
             toastPaused: '已暂停',
-            toastResumeSttFailed: '恢复语音识别失败，请检查麦克风与语音服务凭证',
+            toastResumeSttFailed: '恢复语音识别失败，请检查麦克风和网络后重试',
             toastResumed: '已继续录制',
             toastPauseResumeFailed: '暂停/继续失败',
             exportSuccess: '✅ 已复制 SOP 到剪切板',
@@ -130,7 +152,29 @@
             exportSummaryLines: '• 起始页面：{startUrl}<br>• 录制时间：{createdAt}<br>• 共 {steps} 个操作步骤，总时长 {duration}',
             exportGeneratedBy: '由 Onvord 录制生成 · {createdAt}',
             exportStepsUnit: '步骤',
-            exportLang: 'zh'
+            exportLang: 'zh',
+            commercialStatusTrialAvailable: '待开始试用',
+            commercialStatusTrialActive: '试用中，还剩 {days} 天',
+            commercialStatusExpired: '试用已结束',
+            commercialStatusSubscribed: '订阅有效',
+            commercialStatusSignIn: '需要登录',
+            commercialStatusUnavailable: '暂时不可用',
+            commercialTitleTrialAvailable: '已完成登录，开始第一次录制就会进入 7 天试用。',
+            commercialTitleTrialActive: '试用期有效，现在可以直接开始录制。',
+            commercialTitleExpired: '试用已结束，订阅后继续录制。',
+            commercialTitleSubscribed: 'Onvord Pro 已开通，现在可以直接开始录制。',
+            commercialTitleSignIn: '先用 Google 登录，再开始 7 天试用。',
+            commercialTitleError: '暂时无法加载你的使用状态。',
+            commercialCopyReady: '已登录，可以直接开始录制。',
+            commercialCopyTrial: '试用期内可以继续录制，订阅时也会自动绑定到当前账号。',
+            commercialCopyExpired: '试用已结束，订阅后可继续录制。',
+            commercialCopySignIn: '登录后即可开始 7 天试用，试用、订阅和权限都会绑定到你的账号。',
+            commercialCopyError: '请稍后重试。如果刚安装完成，也可以先点击下方按钮登录 Google。',
+            commercialNoteTrial: '',
+            commercialNoteSubscribed: '',
+            commercialNoteExpired: '',
+            commercialCheckout: '去订阅',
+            commercialPortal: '管理订阅'
         },
         en: {
             titleTagline: 'Operate while explaining<br>AI learns your workflow instantly',
@@ -139,7 +183,7 @@
             inst3: 'Perform actions while explaining by voice',
             inst4: 'Generate SOP and share with AI',
             startRecording: 'Start Recording',
-            settingsLink: 'Speech Settings',
+            settingsLink: 'Settings',
             recRecording: 'Recording',
             recDone: 'Recording Done',
             recPaused: 'Paused',
@@ -162,42 +206,55 @@
             keypressFallback: 'Shortcut',
             actionClick: 'Click {target}',
             actionInput: 'Type "{value}"',
-            actionInputWithTarget: 'Type "{value}" in {target}',
-            actionInputTargetOnly: 'Type in {target}',
             actionScroll: 'Scroll',
             actionScrollMerged: 'Scroll (merged {count})',
             actionSelect: 'Select "{value}"',
-            actionSelectWithTarget: 'Select "{value}" in {target}',
-            actionSelectTargetOnly: 'Select in {target}',
             actionClickElement: 'Click element',
             actionInputShort: 'Type',
             actionSelectShort: 'Select',
             actionNavigate: 'Navigate',
             clickPointScreenshot: 'Step {step} Screenshot',
-            startNeedKey: 'Set API Key First',
+            startNeedKey: 'Service Unavailable',
+            startNeedBackend: 'Service Unavailable',
+            startNeedSession: 'Reconnect Required',
+            startNeedManaged: 'Managed Speech Unavailable',
+            startNeedSubscription: 'Subscribe First',
+            startNeedGoogle: 'Continue with Google',
+            startNeedGoogleBusy: 'Opening Google sign-in…',
             startNeedMic: 'Enable Microphone Access',
             startProviderUnsupported: 'Selected provider is not supported yet',
             initStt: 'Initializing speech recognition…',
             toastWsDisconnected: 'Speech connection disconnected. Pause and resume to reconnect.',
-            toastNeedSetupKey: 'Configure credentials for the selected speech provider first',
+            toastNeedSetupKey: 'Speech service is temporarily unavailable. Please try again later',
+            toastNeedBackend: 'The service is temporarily unavailable. Please try again later',
+            toastNeedSession: 'Your connection has expired. Reopen Onvord and try again',
+            toastNeedManaged: 'Speech service is temporarily unavailable. Please try again later',
+            toastNeedSubscription: 'The 7-day trial has ended. Subscribe to continue recording',
+            toastCheckoutMissing: 'Checkout link is not configured yet',
+            toastPortalMissing: 'Billing portal link is not configured yet',
+            toastCheckoutLoginRequired: 'Sign in with Google before subscribing',
+            toastCheckoutLoginContinue: 'Google connected. Continuing to checkout…',
+            toastGoogleSigninFailed: 'Google sign-in failed. Please try again later',
+            toastGoogleSigninCancelled: 'Google sign-in was cancelled',
+            toastGoogleSigninSuccess: 'Google connected. You can start using Onvord now',
+            toastSessionExpired: 'The current session is invalid or expired. Sign in again',
+            toastSpeechSessionFailed: 'Unable to start speech recognition right now. Please try again later',
             toastMicDenied: 'Microphone permission denied. Cannot start recording',
             toastNoMic: 'No microphone device found. Cannot start recording',
             toastMicBusy: 'Microphone unavailable (possibly occupied). Cannot start recording',
-            toastKeyInvalid: 'Invalid Deepgram API key. Update it in settings and retry',
-            toastNetwork: 'Cannot connect to Deepgram (network or DNS issue)',
-            toastAliyunKeyInvalid: 'Invalid Aliyun API key, or it does not match the selected region. Check settings and retry',
-            toastAliyunKeyFormat: 'Aliyun API key contains invalid characters (e.g. non-ASCII/full-width symbols). Re-copy the key',
-            toastAliyunNetwork: 'Cannot connect to Aliyun (network or DNS issue)',
-            toastAliyunAuthRule: 'Aliyun WebSocket auth-header rule is unavailable in this extension context. Reload extension and retry',
-            toastAliyunWsHandshake: 'Aliyun key is valid but realtime websocket handshake failed after fallback attempts. Try switching region and retry',
-            toastAliyunInitFailed: 'Aliyun realtime initialization failed. Check region settings; if it still fails, switch to Deepgram first',
+            toastAliyunKeyInvalid: 'Speech service authorization failed. Please try again later',
+            toastAliyunKeyFormat: 'Speech service initialization failed. Please try again',
+            toastAliyunNetwork: 'Unable to connect to speech service. Check your network and retry',
+            toastAliyunAuthRule: 'Speech service initialization failed. Reload the extension and retry',
+            toastAliyunWsHandshake: 'Speech service connection failed. Please try again later',
+            toastAliyunInitFailed: 'Speech service initialization failed. Please try again later',
             toastInitFailed: 'Speech recognition initialization failed. Cannot start recording',
             toastStartFailed: 'Failed to start',
             generating: 'Generating…',
             toastGenerateFailed: 'Failed to generate SOP',
             toastGenerateError: 'Generation failed',
             toastPaused: 'Paused',
-            toastResumeSttFailed: 'Failed to resume speech recognition. Check microphone and provider credentials',
+            toastResumeSttFailed: 'Failed to resume speech recognition. Check microphone and network and retry',
             toastResumed: 'Recording resumed',
             toastPauseResumeFailed: 'Pause/Resume failed',
             exportSuccess: '✅ SOP copied to clipboard',
@@ -228,7 +285,29 @@
             exportSummaryLines: '• Start page: {startUrl}<br>• Recorded at: {createdAt}<br>• {steps} action steps, total duration {duration}',
             exportGeneratedBy: 'Generated by Onvord · {createdAt}',
             exportStepsUnit: 'steps',
-            exportLang: 'en'
+            exportLang: 'en',
+            commercialStatusTrialAvailable: 'Trial available',
+            commercialStatusTrialActive: '{days} day(s) left in trial',
+            commercialStatusExpired: 'Trial ended',
+            commercialStatusSubscribed: 'Subscription active',
+            commercialStatusSignIn: 'Sign in required',
+            commercialStatusUnavailable: 'Temporarily unavailable',
+            commercialTitleTrialAvailable: 'You are signed in. Your 7-day trial starts on the first recording.',
+            commercialTitleTrialActive: 'Your trial is active. You can start recording now.',
+            commercialTitleExpired: 'Your trial has ended. Subscribe to keep recording.',
+            commercialTitleSubscribed: 'Onvord Pro is active. You can start recording now.',
+            commercialTitleSignIn: 'Use Google first, then start your 7-day trial.',
+            commercialTitleError: 'Unable to load your access right now.',
+            commercialCopyReady: 'You are signed in and ready to record.',
+            commercialCopyTrial: 'Your trial is active. Subscription will stay tied to this account later on.',
+            commercialCopyExpired: 'No active access is available. Subscribe to continue recording.',
+            commercialCopySignIn: 'Sign in to start your 7-day trial. Your trial, subscription, and access will stay tied to your account.',
+            commercialCopyError: 'Please try again in a moment. If you just installed Onvord, you can start by signing in with Google below.',
+            commercialNoteTrial: '',
+            commercialNoteSubscribed: '',
+            commercialNoteExpired: '',
+            commercialCheckout: 'Subscribe',
+            commercialPortal: 'Manage Subscription'
         }
     };
 
@@ -246,6 +325,119 @@
         if (el) el.textContent = text;
     }
 
+    function getCommercialUiState(entitlement) {
+        if (!entitlement) return 'sign-in';
+        if (!entitlement.authenticated && !entitlement.userEmail && !entitlement.trial?.started && !entitlement.subscription?.active) {
+            return 'sign-in';
+        }
+        if (entitlement.userIsAnonymous || entitlement.accessSource === 'login-required') return 'sign-in';
+        if (entitlement.reason === 'session-invalid') return 'sign-in';
+        if (entitlement.reason === 'session-missing' || entitlement.reason === 'network-error') return 'sign-in';
+        if (String(entitlement.reason || '').startsWith('bootstrap-')) return 'sign-in';
+        if (entitlement.reason === 'api-base-missing') return 'unavailable';
+        if (!entitlement.ok) return 'unavailable';
+        if (entitlement.subscription?.active) return 'subscribed';
+        if (entitlement.trial?.active) return 'trial-active';
+        if (entitlement.trial?.started && !entitlement.trial?.active) return 'subscribe';
+        if (entitlement.hasAccess) return 'trial-ready';
+        return 'subscribe';
+    }
+
+    function formatCommercialStatus(entitlement) {
+        const state = getCommercialUiState(entitlement);
+        if (state === 'sign-in') return t('commercialStatusSignIn');
+        if (state === 'subscribed') return t('commercialStatusSubscribed');
+        if (state === 'trial-active') return t('commercialStatusTrialActive', { days: entitlement?.trial?.daysLeft || 0 });
+        if (state === 'subscribe') return t('commercialStatusExpired');
+        if (state === 'trial-ready') return t('commercialStatusTrialAvailable');
+        return t('commercialStatusUnavailable');
+    }
+
+    function getCommercialTitle(entitlement) {
+        const state = getCommercialUiState(entitlement);
+        if (state === 'sign-in') return t('commercialTitleSignIn');
+        if (state === 'subscribed') return t('commercialTitleSubscribed');
+        if (state === 'trial-active') return t('commercialTitleTrialActive');
+        if (state === 'subscribe') return t('commercialTitleExpired');
+        if (state === 'trial-ready') return t('commercialTitleTrialAvailable');
+        return t('commercialTitleError');
+    }
+
+    function getCommercialBannerVariant(entitlement) {
+        const state = getCommercialUiState(entitlement);
+        if (state === 'unavailable') return 'is-error';
+        if (state === 'sign-in' || state === 'subscribe') return 'is-upgrade';
+        return 'is-subscribed';
+    }
+
+    function renderCommercialBanner(settings, entitlement = null) {
+        const commercialSettings = Commercial.fixedCommercialSettings({
+            ...(settings || {}),
+            commercialCheckoutUrl: entitlement?.checkoutUrl || settings?.commercialCheckoutUrl || '',
+            commercialPortalUrl: entitlement?.portalUrl || settings?.commercialPortalUrl || ''
+        });
+        const state = getCommercialUiState(entitlement);
+        commercialBannerEl?.classList.remove('hidden');
+        commercialBannerEl?.classList.remove('is-subscribed', 'is-expired', 'is-upgrade', 'is-error');
+        commercialBannerEl?.classList.add(getCommercialBannerVariant(entitlement));
+
+        if (commercialStatusEl) {
+            commercialStatusEl.textContent = formatCommercialStatus(entitlement);
+            commercialStatusEl.classList.remove('warn', 'err');
+            if (state === 'unavailable') {
+                commercialStatusEl.classList.add('err');
+            } else if (state === 'sign-in' || state === 'subscribe' || state === 'trial-ready' || state === 'trial-active') {
+                commercialStatusEl.classList.add('warn');
+            }
+        }
+
+        if (commercialTitleEl) {
+            commercialTitleEl.textContent = getCommercialTitle(entitlement);
+        }
+
+        if (commercialCopyEl) {
+            if (state === 'sign-in') {
+                commercialCopyEl.textContent = t('commercialCopySignIn');
+            } else if (state === 'subscribed') {
+                commercialCopyEl.textContent = t('commercialCopyReady');
+            } else if (state === 'trial-active') {
+                commercialCopyEl.textContent = t('commercialCopyTrial');
+            } else if (state === 'subscribe') {
+                commercialCopyEl.textContent = t('commercialCopyExpired');
+            } else if (state === 'trial-ready') {
+                commercialCopyEl.textContent = `${t('commercialCopyReady')} ${t('commercialCopyTrial')}`;
+            } else {
+                commercialCopyEl.textContent = t('commercialCopyError');
+            }
+        }
+
+        if (btnCommercialCheckout) {
+            btnCommercialCheckout.dataset.action = state === 'sign-in' ? 'signin' : 'checkout';
+            btnCommercialCheckout.textContent = state === 'sign-in'
+                ? t('startNeedGoogle')
+                : t('commercialCheckout');
+            btnCommercialCheckout.disabled = false;
+            btnCommercialCheckout.classList.toggle(
+                'hidden',
+                !(
+                    ((state === 'subscribe' || state === 'trial-ready' || state === 'trial-active')
+                        && Commercial.canOpenBilling('checkout', commercialSettings, entitlement))
+                )
+            );
+        }
+        if (btnCommercialPortal) {
+            btnCommercialPortal.textContent = t('commercialPortal');
+            btnCommercialPortal.disabled = false;
+            btnCommercialPortal.classList.add('hidden');
+        }
+        if (commercialBannerActionsEl) {
+            commercialBannerActionsEl.classList.toggle(
+                'hidden',
+                btnCommercialCheckout?.classList.contains('hidden') && btnCommercialPortal?.classList.contains('hidden')
+            );
+        }
+    }
+
     function applyUiLocale() {
         document.documentElement.lang = uiLocale === 'zh' ? 'zh-CN' : 'en';
         const tagline = $('tagline');
@@ -260,13 +452,21 @@
         micStatusEl?.setAttribute('title', t('micStatusTitle'));
         imgViewerCloseEl?.setAttribute('aria-label', t('screenshotPreview'));
         if (imgViewerImgEl) imgViewerImgEl.alt = t('screenshotPreview');
-        enableStartButton();
+        showGoogleSigninButton();
         setPauseButton(false);
         if (btnStop) btnStop.innerHTML = `<span class="bi">⏹</span>${t('stopRecording')}`;
         if (btnExport) btnExport.textContent = t('exportSop');
         if (btnDownload) btnDownload.textContent = t('downloadFullSop');
         if (btnRedo) btnRedo.textContent = t('recordAgain');
         if (recLabelEl) recLabelEl.textContent = t('recRecording');
+        renderCommercialBanner({}, {
+            ok: true,
+            hasAccess: false,
+            accessSource: 'login-required',
+            userIsAnonymous: true,
+            trial: { started: false, active: false, expired: false, daysLeft: 0 },
+            subscription: { active: false, status: 'inactive', endAt: 0 }
+        });
     }
 
     /* ── Helpers ── */
@@ -279,6 +479,48 @@
     }
     function fmtTime(ms) { const s = Math.floor(ms / 1000); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }
     function toast(msg) { toastEl.textContent = msg; toastEl.classList.add('show'); setTimeout(() => toastEl.classList.remove('show'), 2000); }
+    async function ensureGoogleAccountForCheckout() {
+        const settings = await getSttSettings();
+        const entitlement = await Commercial.fetchEntitlement(settings, { fresh: true });
+        if (!entitlement.userIsAnonymous && entitlement.accessSource !== 'login-required') {
+            return { ok: true, settings };
+        }
+
+        toast(t('toastCheckoutLoginRequired'));
+        const signedIn = await signInForCommercialAccess(false);
+        if (!signedIn) {
+            return { ok: false };
+        }
+        toast(t('toastCheckoutLoginContinue'));
+        return { ok: true, settings: await getSttSettings() };
+    }
+    async function openBillingUrl(kind) {
+        let settings = await getSttSettings();
+        if (kind === 'checkout') {
+            const linked = await ensureGoogleAccountForCheckout();
+            if (!linked.ok) return;
+            settings = linked.settings || settings;
+        }
+        const link = await Commercial.createBillingLink(settings, kind);
+        if (!link.ok || !link.url) {
+            toast(t(kind === 'portal' ? 'toastPortalMissing' : 'toastCheckoutMissing'));
+            return;
+        }
+        try {
+            await chrome.tabs.create({ url: link.url });
+        } catch {
+            toast(t(kind === 'portal' ? 'toastPortalMissing' : 'toastCheckoutMissing'));
+        }
+    }
+
+    async function handleCommercialPrimaryAction() {
+        const action = String(btnCommercialCheckout?.dataset.action || '').trim();
+        if (action === 'signin') {
+            await signInForCommercialAccess();
+            return;
+        }
+        await openBillingUrl('checkout');
+    }
     function normalizeNarrationText(text) {
         return String(text == null ? '' : text).replace(/\s+/g, ' ').trim();
     }
@@ -380,22 +622,12 @@
 
     /* ── Speech-to-Text Engine ── */
     const STT_PROVIDER = {
-        DEEPGRAM: 'deepgram',
         ALIYUN: 'aliyun'
     };
-    const STT_SETTINGS_KEYS = [
-        'sttProvider',
-        'deepgramKey',
-        'deepgramLang',
-        'aliyunKey',
-        'aliyunRegion',
-        'aliyunModel'
-    ];
+    const STT_SETTINGS_KEYS = [...Commercial.STORAGE_KEYS];
     const STT_SETTINGS_DEFAULTS = {
-        sttProvider: STT_PROVIDER.ALIYUN,
-        deepgramLang: 'zh-CN',
-        aliyunRegion: 'cn',
-        aliyunModel: 'qwen3-asr-flash-realtime'
+        commercialLanguage: 'zh-CN',
+        commercialLastSpeechProvider: STT_PROVIDER.ALIYUN
     };
     const ALIYUN_WS_AUTH_RULE_IDS = [391001, 391002, 391003];
     const ALIYUN_WS_AUTH_HOSTS = [
@@ -405,12 +637,11 @@
     ];
     let sttEngine = null;
     let sttSocket = null;
-    let mediaRecorder = null;
     let aliyunAudioCtx = null;
     let aliyunAudioSource = null;
     let aliyunAudioProcessor = null;
-    let aliyunAudioProcessorMode = '';
     let aliyunAudioSink = null;
+    let aliyunAudioProcessorMode = '';
     let sttStream = null;
     let sttLastFailure = '';
     let preferredMicDeviceId = '';
@@ -470,15 +701,6 @@
             }
         }
         return await navigator.mediaDevices.getUserMedia({ audio: true });
-    }
-
-    function resolveSttProvider(provider) {
-        if (provider === STT_PROVIDER.DEEPGRAM) return STT_PROVIDER.DEEPGRAM;
-        return STT_PROVIDER.ALIYUN;
-    }
-
-    function normalizeDeepgramLanguage(lang) {
-        return lang === 'en-US' ? 'en-US' : 'zh-CN';
     }
 
     function normalizeAliyunLanguage(lang) {
@@ -633,28 +855,19 @@
 
     async function getSttSettings() {
         const data = await new Promise(resolve => chrome.storage.local.get(STT_SETTINGS_KEYS, resolve));
-        const merged = { ...STT_SETTINGS_DEFAULTS, ...(data || {}) };
-        const normalizedProvider = resolveSttProvider(merged.sttProvider);
-        if (normalizedProvider !== merged.sttProvider) {
-            merged.sttProvider = normalizedProvider;
-            chrome.storage.local.set({ sttProvider: normalizedProvider }).catch(() => { });
-        }
-        merged.deepgramKey = normalizeCredentialValue(merged.deepgramKey);
-        merged.aliyunKey = normalizeCredentialValue(merged.aliyunKey);
-        return merged;
+        return Commercial.fixedCommercialSettings({
+            ...STT_SETTINGS_DEFAULTS,
+            ...(data || {})
+        });
     }
 
     function hasProviderCredential(settings) {
-        const provider = resolveSttProvider(settings.sttProvider);
-        if (provider === STT_PROVIDER.DEEPGRAM) {
-            return Boolean(String(settings.deepgramKey || '').trim());
-        }
-        return Boolean(String(settings.aliyunKey || '').trim());
+        return Commercial.hasBackendConfig(settings);
     }
 
-    function sttMissingCredentialReason(provider) {
-        if (provider === STT_PROVIDER.DEEPGRAM) return 'missing-deepgram-key';
-        return 'missing-aliyun-key';
+    function sttMissingCredentialReason(provider, settings) {
+        if (!Commercial.hasBackendConfig(settings)) return 'commercial-backend-missing';
+        return 'commercial-managed-credential-missing';
     }
 
     function emitVoiceStarted(audioStartHint) {
@@ -680,20 +893,6 @@
         lastFinalNarrationText = transcript;
         chrome.runtime.sendMessage({ type: 'NARRATION_EVENT', text: transcript, timestamp: ts, isFinal: true }).catch(() => { });
         appendNarrationToTimeline(transcript, ts);
-    }
-
-    function pickMediaRecorderOptions() {
-        const preferred = [
-            'audio/webm;codecs=opus',
-            'audio/webm',
-            'audio/mp4'
-        ];
-        for (const type of preferred) {
-            try {
-                if (MediaRecorder.isTypeSupported(type)) return { mimeType: type };
-            } catch { /* noop */ }
-        }
-        return undefined;
     }
 
     function arrayBufferToBase64(buffer) {
@@ -859,26 +1058,6 @@
         return { ok: true, reason: 'ok' };
     }
 
-    async function probeDeepgram(apiKey) {
-        const ctrl = new AbortController();
-        const t = setTimeout(() => ctrl.abort(), 6000);
-        try {
-            const res = await fetch('https://api.deepgram.com/v1/projects', {
-                method: 'GET',
-                headers: { Authorization: `Token ${apiKey}` },
-                signal: ctrl.signal
-            });
-            if (res.ok) return { ok: true, reason: 'ok' };
-            if (res.status === 401 || res.status === 403) return { ok: false, reason: 'deepgram-key-invalid', status: res.status };
-            return { ok: false, reason: 'deepgram-server', status: res.status };
-        } catch (e) {
-            if (e?.name === 'AbortError') return { ok: false, reason: 'deepgram-network-timeout' };
-            return { ok: false, reason: 'deepgram-network' };
-        } finally {
-            clearTimeout(t);
-        }
-    }
-
     async function probeAliyun(apiKey, region) {
         const ctrl = new AbortController();
         const t = setTimeout(() => ctrl.abort(), 6000);
@@ -923,114 +1102,6 @@
         return best;
     }
 
-    /* ── Deepgram WebSocket STT ── */
-    async function initDeepgram(stream, apiKey, lang, micStatusEl) {
-        const params = new URLSearchParams({
-            model: 'nova-2',
-            language: normalizeDeepgramLanguage(lang),
-            smart_format: 'true',
-            interim_results: 'true',
-            utterance_end_ms: '3000',
-            vad_events: 'true',
-            punctuate: 'true',
-        });
-        const wsUrl = `wss://api.deepgram.com/v1/listen?${params.toString()}`;
-
-        try {
-            sttSocket = new WebSocket(wsUrl, ['token', apiKey]);
-        } catch (e) {
-            if (micStatusEl) micStatusEl.classList.add('error');
-            console.error('Deepgram WS error:', e);
-            return { ok: false, reason: 'deepgram-ws-constructor' };
-        }
-
-        return await new Promise((resolve) => {
-            let settled = false;
-            let opened = false;
-            const finish = (ok, reason) => {
-                if (settled) return;
-                settled = true;
-                clearTimeout(handshakeTimer);
-                resolve({ ok, reason });
-            };
-            const handshakeTimer = setTimeout(() => {
-                try { sttSocket?.close(); } catch { /* noop */ }
-                finish(false, 'deepgram-ws-timeout');
-            }, 7000);
-
-            sttSocket.onopen = () => {
-                opened = true;
-                console.log('Deepgram connected');
-                try {
-                    mediaRecorder = new MediaRecorder(stream, pickMediaRecorderOptions());
-                    mediaRecorder.ondataavailable = (e) => {
-                        if (e.data.size > 0 && sttSocket && sttSocket.readyState === WebSocket.OPEN) {
-                            sttSocket.send(e.data);
-                        }
-                    };
-                    mediaRecorder.start(250);
-                    finish(true, 'ok');
-                } catch (e) {
-                    console.error('MediaRecorder error:', e);
-                    if (micStatusEl) micStatusEl.classList.add('error');
-                    finish(false, 'media-recorder-error');
-                }
-            };
-
-            sttSocket.onmessage = (event) => {
-                try {
-                    const msg = JSON.parse(event.data);
-                    if (msg.type === 'SpeechStarted') {
-                        emitVoiceStarted(msg.start || (Date.now() - startTime));
-                        return;
-                    }
-                    if (msg.type === 'UtteranceEnd') {
-                        emitVoiceEnded();
-                        return;
-                    }
-                    if (msg.type === 'Results' && msg.channel) {
-                        const alt = msg.channel.alternatives?.[0];
-                        if (!alt || !alt.transcript) return;
-                        if (msg.is_final) {
-                            emitFinalNarration(alt.transcript);
-                        } else {
-                            // 录制中仅显示“识别中”状态，不展示 partial 文本。
-                            pendingInterimNarration = '';
-                        }
-                    }
-                } catch { /* ignore */ }
-            };
-
-            sttSocket.onerror = (e) => {
-                const stateMap = ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'];
-                console.error('Deepgram WS error:', {
-                    readyState: stateMap[e?.target?.readyState ?? 3] || String(e?.target?.readyState),
-                    url: wsUrl,
-                    eventType: e?.type || 'error'
-                });
-                if (micStatusEl) micStatusEl.classList.add('error');
-                if (!opened) finish(false, 'deepgram-ws-error');
-            };
-
-            sttSocket.onclose = (e) => {
-                console.log('Deepgram WS closed:', e.code, e.reason);
-                const closedByExpectedFlow = Boolean(e?.target?.__onvordExpectedClose);
-                if (!opened) {
-                    if (closedByExpectedFlow) {
-                        finish(false, 'deepgram-ws-closed-by-client');
-                        return;
-                    }
-                    finish(false, `deepgram-ws-close-${e.code || 'unknown'}`);
-                    return;
-                }
-                if (!closedByExpectedFlow && currentView === 'recording' && !isPaused && e.code !== 1000) {
-                    if (micStatusEl) micStatusEl.classList.add('error');
-                    toast(t('toastWsDisconnected'));
-                }
-            };
-        });
-    }
-
     function extractAliyunTranscript(msg) {
         const candidates = [
             msg?.transcript,
@@ -1066,7 +1137,7 @@
         }
         const model = String(settings.aliyunModel || STT_SETTINGS_DEFAULTS.aliyunModel).trim() || STT_SETTINGS_DEFAULTS.aliyunModel;
         const normalizedRegion = normalizeAliyunRegion(region);
-        const lang = normalizeAliyunLanguage(settings.deepgramLang);
+        const lang = normalizeAliyunLanguage(settings.sttLanguage || settings.commercialLanguage);
         const authRule = await applyAliyunWsAuthRules(apiKey);
         console.info('Aliyun WS auth rule:', {
             ok: authRule.ok,
@@ -1298,10 +1369,6 @@
             pendingInterimNarration = '';
             lastFinalNarrationText = '';
         }
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            try { mediaRecorder.stop(); } catch { /* noop */ }
-        }
-        mediaRecorder = null;
         stopAliyunPcmCapture();
         if (sttStream) {
             sttStream.getTracks().forEach(t => t.stop());
@@ -1311,29 +1378,17 @@
             const ws = sttSocket;
             ws.__onvordExpectedClose = true;
             if (ws.readyState === WebSocket.OPEN) {
-                if (sttEngine === STT_PROVIDER.DEEPGRAM) {
-                    try { ws.send(JSON.stringify({ type: 'Finalize' })); } catch { /* noop */ }
-                    setTimeout(() => {
-                        if (ws.readyState === WebSocket.OPEN) {
-                            try { ws.send(JSON.stringify({ type: 'CloseStream' })); } catch { /* noop */ }
-                            try { ws.close(1000, 'client-stop'); } catch { /* noop */ }
-                        }
-                    }, 220);
-                } else if (sttEngine === STT_PROVIDER.ALIYUN) {
-                    try {
-                        ws.send(JSON.stringify({
-                            event_id: `event_${Date.now()}`,
-                            type: 'session.finish'
-                        }));
-                    } catch { /* noop */ }
-                    setTimeout(() => {
-                        if (ws.readyState === WebSocket.OPEN) {
-                            try { ws.close(1000, 'client-stop'); } catch { /* noop */ }
-                        }
-                    }, 1200);
-                } else {
-                    try { ws.close(1000, 'client-stop'); } catch { /* noop */ }
-                }
+                try {
+                    ws.send(JSON.stringify({
+                        event_id: `event_${Date.now()}`,
+                        type: 'session.finish'
+                    }));
+                } catch { /* noop */ }
+                setTimeout(() => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        try { ws.close(1000, 'client-stop'); } catch { /* noop */ }
+                    }
+                }, 1200);
             } else if (ws.readyState === WebSocket.CONNECTING) {
                 try { ws.close(1000, 'client-stop'); } catch { /* noop */ }
             }
@@ -1349,21 +1404,14 @@
         micStatusEl?.classList.remove('error');
 
         const settings = await getSttSettings();
-        const provider = resolveSttProvider(settings.sttProvider);
-
         if (!hasProviderCredential(settings)) {
-            sttLastFailure = sttMissingCredentialReason(provider);
-            micStatusEl?.classList.add('error');
-            return false;
-        }
-
-        if (provider === STT_PROVIDER.ALIYUN && containsNonLatin1(settings.aliyunKey)) {
-            sttLastFailure = 'aliyun-key-format-invalid';
+            sttLastFailure = sttMissingCredentialReason(settings.sttProvider, settings);
             micStatusEl?.classList.add('error');
             return false;
         }
 
         try {
+            const speechSessionPromise = Commercial.fetchSpeechSession(settings);
             const mic = await ensureMicPermission();
             if (!mic.ok) {
                 if (mic.error === 'NotFoundError' || mic.error === 'DevicesNotFoundError') {
@@ -1382,65 +1430,63 @@
             }
             sttStream = await getMicStreamForUse();
 
-            if (provider === STT_PROVIDER.DEEPGRAM) {
-                const apiKey = String(settings.deepgramKey || '').trim();
-                const deepgramStarted = await initDeepgram(sttStream, apiKey, settings.deepgramLang, micStatusEl);
-                if (!deepgramStarted.ok) {
-                    sttStream.getTracks().forEach(t => t.stop());
-                    sttStream = null;
-                    const probe = await probeDeepgram(apiKey);
-                    if (!probe.ok && probe.reason === 'deepgram-key-invalid') {
-                        sttLastFailure = 'deepgram-key-invalid';
-                    } else if (!probe.ok && (probe.reason === 'deepgram-network' || probe.reason === 'deepgram-network-timeout')) {
-                        sttLastFailure = 'deepgram-network';
-                    } else {
-                        sttLastFailure = deepgramStarted.reason || 'deepgram-init-failed';
-                    }
-                    micStatusEl?.classList.add('error');
-                    return false;
+            const speechSession = await speechSessionPromise;
+            if (!speechSession.ok) {
+                sttStream.getTracks().forEach(t => t.stop());
+                sttStream = null;
+                if (speechSession.reason === 'api-base-missing') {
+                    sttLastFailure = 'commercial-backend-missing';
+                } else if (speechSession.reason === 'session-missing') {
+                    sttLastFailure = 'commercial-session-missing';
+                } else if (speechSession.reason === 'session-invalid') {
+                    sttLastFailure = 'commercial-session-invalid';
+                } else if (speechSession.reason === 'google-login-required') {
+                    sttLastFailure = 'commercial-google-login-required';
+                } else if (speechSession.reason === 'subscription-required') {
+                    const latestEntitlement = await Commercial.fetchEntitlement(settings, { fresh: true });
+                    renderCommercialBanner(settings, latestEntitlement);
+                    sttLastFailure = 'commercial-subscription-required';
+                } else {
+                    sttLastFailure = 'commercial-speech-session-failed';
                 }
-                sttEngine = STT_PROVIDER.DEEPGRAM;
-                return true;
+                micStatusEl?.classList.add('error');
+                return false;
             }
 
-            if (provider === STT_PROVIDER.ALIYUN) {
-                const apiKey = String(settings.aliyunKey || '').trim();
-                const aliyunStarted = await initAliyun(sttStream, settings, micStatusEl);
-                if (!aliyunStarted.ok) {
-                    sttStream.getTracks().forEach(t => t.stop());
-                    sttStream = null;
-                    const probe = await probeAliyunWithFallback(apiKey, settings.aliyunRegion);
-                    const startedReason = String(aliyunStarted.reason || '');
-                    const wsInitFailed = startedReason.startsWith('aliyun-ws-') || aliyunStarted.reason === 'aliyun-audio-capture-failed';
-                    if (!probe.ok && probe.reason === 'aliyun-key-invalid') {
-                        sttLastFailure = 'aliyun-key-invalid';
-                    } else if (!probe.ok && probe.reason === 'aliyun-key-format-invalid') {
-                        sttLastFailure = 'aliyun-key-format-invalid';
-                    } else if (!probe.ok && (probe.reason === 'aliyun-network' || probe.reason === 'aliyun-network-timeout')) {
-                        sttLastFailure = 'aliyun-network';
-                    } else if (aliyunStarted.reason === 'aliyun-auth-rule-unavailable') {
-                        sttLastFailure = 'aliyun-auth-rule-unavailable';
-                    } else if (probe.ok && wsInitFailed) {
-                        sttLastFailure = 'aliyun-ws-handshake-failed';
-                    } else if (wsInitFailed) {
-                        sttLastFailure = 'aliyun-init-failed';
-                    } else {
-                        sttLastFailure = aliyunStarted.reason || 'aliyun-init-failed';
-                    }
-                    micStatusEl?.classList.add('error');
-                    return false;
-                }
-                sttEngine = STT_PROVIDER.ALIYUN;
-                return true;
+            const aliyunSettings = {
+                aliyunKey: String(speechSession.token || speechSession.apiKey || '').trim(),
+                aliyunRegion: speechSession.region || 'cn',
+                aliyunModel: speechSession.model || 'qwen3-asr-flash-realtime',
+                sttLanguage: speechSession.language || settings.commercialLanguage
+            };
+            if (containsNonLatin1(aliyunSettings.aliyunKey)) {
+                sttStream.getTracks().forEach(t => t.stop());
+                sttStream = null;
+                sttLastFailure = 'aliyun-key-format-invalid';
+                micStatusEl?.classList.add('error');
+                return false;
             }
-
-            sttLastFailure = 'aliyun-init-failed';
-            micStatusEl?.classList.add('error');
-            return false;
+            const aliyunStarted = await initAliyun(sttStream, aliyunSettings, micStatusEl);
+            if (!aliyunStarted.ok) {
+                sttStream.getTracks().forEach(t => t.stop());
+                sttStream = null;
+                const startedReason = String(aliyunStarted.reason || '');
+                const wsInitFailed = startedReason.startsWith('aliyun-ws-') || aliyunStarted.reason === 'aliyun-audio-capture-failed';
+                if (aliyunStarted.reason === 'aliyun-auth-rule-unavailable') {
+                    sttLastFailure = 'aliyun-auth-rule-unavailable';
+                } else if (wsInitFailed) {
+                    sttLastFailure = 'aliyun-ws-handshake-failed';
+                } else {
+                    sttLastFailure = aliyunStarted.reason || 'aliyun-init-failed';
+                }
+                micStatusEl?.classList.add('error');
+                return false;
+            }
+            sttEngine = STT_PROVIDER.ALIYUN;
+            return true;
         } catch (e) {
             console.error('STT init failed:', e);
-            if (provider === STT_PROVIDER.ALIYUN) sttLastFailure = 'aliyun-init-failed';
-            else sttLastFailure = 'deepgram-init-failed';
+            sttLastFailure = 'commercial-speech-session-failed';
             micStatusEl?.classList.add('error');
             return false;
         }
@@ -1645,8 +1691,16 @@
         clearPlaceholder();
 
         const icon = evIcon(ev.actionType);
-        const fullLabel = describeAction(ev, ev.actionType);
-        const label = compactLabel(fullLabel, 26) || fullLabel || ev.actionType;
+        let label = '';
+        switch (ev.actionType) {
+            case 'click': label = t('actionClick', { target: ev.target?.description || t('elementFallback') }); break;
+            case 'input': label = t('actionInput', { value: (ev.value || '').substring(0, 15) }); break;
+            case 'navigate': case 'navigation': label = ev.pageTitle || t('pageFallback'); break;
+            case 'scroll': label = t('actionScroll'); break;
+            case 'select': label = t('actionSelect', { value: (ev.value || '').substring(0, 15) }); break;
+            case 'keypress': label = ev.key || ev.value || t('keypressFallback'); break;
+            default: label = ev.actionType;
+        }
 
         // For input events, update the last input pill instead of creating a new one
         if (ev.actionType === 'input') {
@@ -1657,9 +1711,9 @@
                     lastPill.classList.add('ev-pill-preview');
                     if (ev.timestamp != null) lastPill.setAttribute('data-ts', String(ev.timestamp));
                     setPillText(lastPill, `${icon} ${label}`);
-                    lastPill.setAttribute('title', `${fmtTime(ev.timestamp)} — ${fullLabel}`);
+                    lastPill.setAttribute('title', `${fmtTime(ev.timestamp)} — ${label}`);
                     const shot = getInlineScreenshotSrc(ev);
-                    if (shot) upsertPillThumb(lastPill, shot, `${fmtTime(ev.timestamp)} — ${fullLabel}`);
+                    if (shot) upsertPillThumb(lastPill, shot, `${fmtTime(ev.timestamp)} — ${label}`);
                     return; // Updated in place, no new pill needed
                 }
             }
@@ -1688,10 +1742,10 @@
         pill.className = 'ev-pill ev-pill-preview';
         pill.setAttribute('data-type', ev.actionType);
         if (ev.timestamp != null) pill.setAttribute('data-ts', String(ev.timestamp));
-        pill.setAttribute('title', `${fmtTime(ev.timestamp)} — ${fullLabel}`);
+        pill.setAttribute('title', `${fmtTime(ev.timestamp)} — ${label}`);
         setPillText(pill, `${icon} ${label}`);
         const shot = getInlineScreenshotSrc(ev);
-        if (shot) upsertPillThumb(pill, shot, `${fmtTime(ev.timestamp)} — ${fullLabel}`);
+        if (shot) upsertPillThumb(pill, shot, `${fmtTime(ev.timestamp)} — ${label}`);
 
         const last = getLastTimelineItem();
         if (last && last.classList.contains('tl-actions')) {
@@ -1713,52 +1767,28 @@
         return t.length > maxLen ? `${t.slice(0, maxLen)}…` : t;
     }
 
-    function describeAction(action, fallback = '') {
-        const type = normalizeActionTypeForExport(action?.type || action?.actionType || '');
-        const target = normalizeNarrationText(action?.target?.description || '');
-        const targetTag = normalizeNarrationText(action?.target?.tag || '').toLowerCase();
-        const value = normalizeNarrationText(action?.value || '');
-        const pageTitle = normalizeNarrationText(action?.pageTitle || action?.page_title || action?.url || '');
-
-        switch (type) {
-            case 'click':
-                return target ? t('actionClick', { target }) : (fallback || t('actionClickElement'));
-            case 'input':
-                if (target && value) return t('actionInputWithTarget', { target, value });
-                if (value) return t('actionInput', { value });
-                if (target) return t('actionInputTargetOnly', { target });
-                return fallback || t('actionInputShort');
-            case 'navigate':
-            case 'navigation':
-                return pageTitle || fallback || t('actionNavigate');
-            case 'scroll':
-                return fallback || t('actionScroll');
-            case 'select':
-                if (targetTag === 'select') {
-                    if (target && value) return t('actionSelectWithTarget', { target, value });
-                    if (target) return t('actionSelectTargetOnly', { target });
-                }
-                if (value) return t('actionSelect', { value });
-                if (target) return t('actionSelectTargetOnly', { target });
-                return fallback || t('actionSelectShort');
-            case 'keypress':
-                return normalizeNarrationText(action?.key || action?.value || '') || fallback || t('keypressFallback');
-            default:
-                return fallback || normalizeNarrationText(action?.description || '') || type || t('actionFallback');
-        }
-    }
-
     function getPreviewActionLabel(step) {
         const action = step?.action || {};
-        const desc = describeAction(action, normalizeNarrationText(action.description || ''));
-        return compactLabel(desc, 26) || t('actionFallback');
+        const type = action.type || '';
+        const rawDesc = normalizeNarrationText(action.description || '');
+        if (rawDesc) return compactLabel(rawDesc, 26);
+
+        switch (type) {
+            case 'click': return t('actionClickElement');
+            case 'input': return compactLabel(t('actionInput', { value: action.value || '' }), 22) || t('actionInputShort');
+            case 'navigate':
+            case 'navigation': return compactLabel(action.page_title || action.url || t('actionNavigate'), 24);
+            case 'scroll': return t('actionScroll');
+            case 'select': return compactLabel(t('actionSelect', { value: action.value || '' }), 22) || t('actionSelectShort');
+            case 'keypress': return compactLabel(action.key || action.value || t('keypressFallback'), 18);
+            default: return compactLabel(type || t('actionFallback'), 22);
+        }
     }
 
     function createPreviewPill(step) {
         const action = step?.action || {};
         const actionType = action.type || 'action';
-        const fullLabel = describeAction(action, normalizeNarrationText(action.description || ''));
-        const label = compactLabel(fullLabel, 26) || getPreviewActionLabel(step);
+        const label = getPreviewActionLabel(step);
         const icon = evIcon(actionType);
 
         const pill = document.createElement('span');
@@ -1766,7 +1796,7 @@
         pill.setAttribute('data-type', actionType);
         if (step?.timestampMs != null) pill.setAttribute('data-ts', String(step.timestampMs));
         const ts = step?.timestamp || '';
-        pill.setAttribute('title', `${ts ? `${ts} — ` : ''}${fullLabel || label}`);
+        pill.setAttribute('title', `${ts ? `${ts} — ` : ''}${label}`);
         setPillText(pill, `${icon} ${label}`);
         const safeImage = normalizeImageSrc(step?.screenshot);
         if (safeImage) upsertPillThumb(pill, safeImage, t('clickPointScreenshot', { step: step?.stepNumber || '' }));
@@ -1866,6 +1896,31 @@
         btnStart.innerHTML = `<span class="bi">🎙</span>${t('startNeedMic')}`;
     }
 
+    function showGoogleSigninButton() {
+        setStartButtonMode('google-signin');
+        btnStart.disabled = false;
+        btnStart.classList.remove('btn-disabled');
+        btnStart.innerHTML = `<span class="bi">↗</span>${t('startNeedGoogle')}`;
+    }
+
+    async function signInForCommercialAccess(showSuccessToast = true) {
+        btnStart.disabled = true;
+        btnStart.classList.add('btn-disabled');
+        btnStart.innerHTML = `<span class="bi">↗</span>${t('startNeedGoogleBusy')}`;
+        const settings = await getSttSettings();
+        const linked = await Commercial.signInWithGoogle(settings);
+        if (!linked.ok) {
+            toast(t(linked.reason === 'google-auth-cancelled' ? 'toastGoogleSigninCancelled' : 'toastGoogleSigninFailed'));
+            await refreshStartEligibility();
+            return false;
+        }
+        if (showSuccessToast) {
+            toast(t('toastGoogleSigninSuccess'));
+        }
+        await refreshStartEligibility();
+        return true;
+    }
+
     function setPauseButton(paused) {
         if (!btnPause) return;
         btnPause.innerHTML = paused
@@ -1891,10 +1946,25 @@
     }
 
     async function refreshStartEligibility() {
-        if (currentView !== 'idle') return;
         const settings = await getSttSettings();
-        if (!hasProviderCredential(settings)) {
-            disableStartButton(t('startNeedKey'));
+        const entitlement = await Commercial.fetchEntitlement(settings, { fresh: true });
+        const commercialState = getCommercialUiState(entitlement);
+        renderCommercialBanner(settings, entitlement);
+        if (currentView !== 'idle') return;
+        if (!Commercial.hasBackendConfig(settings)) {
+            disableStartButton(t('startNeedBackend'));
+            return;
+        }
+        if (commercialState === 'sign-in') {
+            showGoogleSigninButton();
+            return;
+        }
+        if (commercialState === 'unavailable') {
+            disableStartButton(t('startNeedManaged'));
+            return;
+        }
+        if (commercialState === 'subscribe') {
+            disableStartButton(t('startNeedSubscription'));
             return;
         }
         let micPermissionState = 'unknown';
@@ -1914,6 +1984,10 @@
             openMicPermissionGuide();
             return;
         }
+        if (startButtonMode === 'google-signin') {
+            await signInForCommercialAccess();
+            return;
+        }
         if (startButtonMode === 'disabled') return;
         await doStart();
     }
@@ -1930,9 +2004,27 @@
             const sttOk = await initSTT();
 
             if (!sttOk) {
-                if (sttLastFailure === 'missing-deepgram-key' || sttLastFailure === 'missing-aliyun-key') {
-                    disableStartButton(t('startNeedKey'));
-                    toast(t('toastNeedSetupKey'));
+                if (sttLastFailure === 'commercial-backend-missing') {
+                    disableStartButton(t('startNeedBackend'));
+                    toast(t('toastNeedBackend'));
+                } else if (sttLastFailure === 'commercial-session-missing') {
+                    disableStartButton(t('startNeedSession'));
+                    toast(t('toastNeedSession'));
+                } else if (sttLastFailure === 'commercial-session-invalid') {
+                    disableStartButton(t('startNeedSession'));
+                    toast(t('toastSessionExpired'));
+                } else if (sttLastFailure === 'commercial-managed-credential-missing') {
+                    disableStartButton(t('startNeedManaged'));
+                    toast(t('toastNeedManaged'));
+                } else if (sttLastFailure === 'commercial-speech-session-failed') {
+                    enableStartButton();
+                    toast(t('toastSpeechSessionFailed'));
+                } else if (sttLastFailure === 'commercial-subscription-required') {
+                    disableStartButton(t('startNeedSubscription'));
+                    toast(t('toastNeedSubscription'));
+                } else if (sttLastFailure === 'commercial-google-login-required') {
+                    showGoogleSigninButton();
+                    toast(t('toastCheckoutLoginRequired'));
                 } else if (sttLastFailure === 'mic-denied') {
                     showMicPermissionButton();
                     toast(t('toastMicDenied'));
@@ -1943,12 +2035,6 @@
                 } else if (sttLastFailure === 'mic-unavailable') {
                     enableStartButton();
                     toast(t('toastMicBusy'));
-                } else if (sttLastFailure === 'deepgram-key-invalid') {
-                    enableStartButton();
-                    toast(t('toastKeyInvalid'));
-                } else if (sttLastFailure === 'deepgram-network') {
-                    enableStartButton();
-                    toast(t('toastNetwork'));
                 } else if (sttLastFailure === 'aliyun-key-invalid') {
                     enableStartButton();
                     toast(t('toastAliyunKeyInvalid'));
@@ -2002,7 +2088,10 @@
             } else {
                 stopSTT({ flushInterim: false });
                 stopVolumeVis();
-                if (res?.reason === 'restricted-page') {
+                if (res?.reason === 'commercial-access-required') {
+                    disableStartButton(t('startNeedSubscription'));
+                    toast(t('toastNeedSubscription'));
+                } else if (res?.reason === 'restricted-page') {
                     toast(t('toastRestricted'));
                 } else {
                     toast(t('toastStartFailed'));
@@ -2374,16 +2463,13 @@
                 const type = normalizeActionTypeForExport(pill.getAttribute('data-type') || 'action');
                 const ts = Number(pill.getAttribute('data-ts'));
                 const matchedStep = consumeStepForExport(stepLookup, ts, type);
-                const pillLabel = getPillExportLabel(pill, matchedStep?.action?.description || type || t('actionFallback'));
+                const label = getPillExportLabel(pill, matchedStep?.action?.description || type || t('actionFallback'));
                 const inlineShot = normalizeImageSrc(pill.querySelector('.ev-thumb-btn')?.getAttribute('data-full-src') || '');
                 const stepShot = normalizeImageSrc(matchedStep?.screenshot || matchedStep?.action?.screenshot_base64 || '');
                 const screenshot = inlineShot || stepShot || '';
                 const timestampMs = Number.isFinite(ts)
                     ? ts
                     : (Number.isFinite(Number(matchedStep?.timestampMs)) ? Number(matchedStep.timestampMs) : null);
-                const description = matchedStep?.action
-                    ? describeAction(matchedStep.action, normalizeNarrationText(matchedStep.action.description || pillLabel))
-                    : pillLabel;
 
                 segSteps.push({
                     stepNumber: ++exportStepNumber,
@@ -2392,7 +2478,7 @@
                     action: {
                         ...(matchedStep?.action || {}),
                         type: matchedStep?.action?.type || type || 'action',
-                        description
+                        description: label
                     },
                     screenshot,
                     narration: ''
@@ -2467,6 +2553,8 @@
     btnPause?.addEventListener('click', doTogglePause);
     btnExport.addEventListener('click', doCopySOP);
     btnDownload?.addEventListener('click', doDownloadHTML);
+    btnCommercialCheckout?.addEventListener('click', handleCommercialPrimaryAction);
+    btnCommercialPortal?.addEventListener('click', () => openBillingUrl('portal'));
     btnRedo.addEventListener('click', () => {
         stopVolumeVis();
         currentSOP = null;
@@ -2488,17 +2576,6 @@
     });
     linkSettings.addEventListener('click', async (e) => {
         e.preventDefault();
-        const settings = await getSttSettings();
-        const hasCredential = hasProviderCredential(settings);
-        let micPermissionState = 'unknown';
-        try {
-            const res = await navigator.permissions.query({ name: 'microphone' });
-            micPermissionState = res.state;
-        } catch { /* noop */ }
-        if (hasCredential && micPermissionState !== 'granted') {
-            openMicPermissionGuide();
-            return;
-        }
         chrome.runtime.openOptionsPage();
     });
 
@@ -2609,17 +2686,26 @@
         }
     });
 
-    /* ── Re-check start eligibility when key changes ── */
+    /* ── Re-check start eligibility when commercial state changes ── */
     chrome.storage.onChanged.addListener((changes) => {
-        if (currentView !== 'idle') return;
-        if (!changes.sttProvider &&
-            !changes.deepgramKey &&
-            !changes.deepgramLang &&
-            !changes.aliyunKey &&
-            !changes.aliyunRegion &&
-            !changes.aliyunModel) {
+        const hasRelevantChange =
+            changes.commercialApiBaseUrl ||
+            changes.commercialSessionToken ||
+            changes.commercialCheckoutUrl ||
+            changes.commercialPortalUrl ||
+            changes.commercialLanguage ||
+            changes.commercialCachedEntitlement ||
+            changes.commercialCachedEntitlementAt ||
+            changes.commercialCachedUserEmail ||
+            changes.commercialLastSpeechProvider;
+        if (!hasRelevantChange) {
             return;
         }
+        getSttSettings()
+            .then((settings) => Commercial.fetchEntitlement(settings, { fresh: true })
+                .then((entitlement) => renderCommercialBanner(settings, entitlement)))
+            .catch(() => {});
+        if (currentView !== 'idle') return;
         refreshStartEligibility();
     });
 })();

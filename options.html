@@ -12,17 +12,16 @@
             --surface-2: #f7fafc;
             --line: #d8e2ec;
             --line-strong: #c5d5e5;
-
             --text: #102a43;
             --muted: #52667a;
             --muted-soft: #7b8ea4;
-
             --ac: #0b5fff;
             --ach: #2f80ff;
             --ac-g: rgba(11, 95, 255, 0.2);
             --ok: #1f9d68;
             --dn: #e5484d;
-
+            --warn: #9a5700;
+            --warn-bg: rgba(255, 163, 53, 0.12);
             --f-title: "Nunito Sans", "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             --f-body: "Public Sans", "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
@@ -47,18 +46,32 @@
         }
 
         .container {
-            max-width: 700px;
+            max-width: 760px;
             width: 100%;
         }
 
-        .head {
+        .stack {
+            display: grid;
+            gap: 12px;
+        }
+
+        .head,
+        .card {
             border-radius: 18px;
             border: 1px solid var(--line);
-            background: rgba(255, 255, 255, 0.92);
+            background: rgba(255, 255, 255, 0.94);
             backdrop-filter: blur(8px);
             box-shadow: 0 12px 24px rgba(12, 27, 61, 0.08);
+        }
+
+        .head {
             padding: 16px 18px;
             margin-bottom: 14px;
+        }
+
+        .card {
+            padding: 16px;
+            margin-bottom: 12px;
         }
 
         .kicker {
@@ -92,26 +105,20 @@
             line-height: 1.65;
         }
 
-        .card {
-            border-radius: 18px;
-            border: 1px solid var(--line);
-            background: rgba(255, 255, 255, 0.94);
-            backdrop-filter: blur(8px);
-            box-shadow: 0 12px 24px rgba(12, 27, 61, 0.08);
-            padding: 16px;
-            margin-bottom: 12px;
-        }
-
         .card-title {
             font-size: 13px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.06em;
             color: #46617e;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .card-subtitle {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.65;
+            margin-bottom: 14px;
         }
 
         .field {
@@ -120,6 +127,18 @@
 
         .field:last-child {
             margin-bottom: 0;
+        }
+
+        .field-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 680px) {
+            .field-row {
+                grid-template-columns: 1fr;
+            }
         }
 
         label {
@@ -165,64 +184,110 @@
             line-height: 1.65;
         }
 
-        .hint a {
-            color: var(--ac);
-            text-decoration: none;
-        }
-
-        .hint a:hover {
-            text-decoration: underline;
-        }
-
-        .provider-section {
-            border-top: 1px dashed #d5e2ef;
-            margin-top: 14px;
-            padding-top: 14px;
-        }
-
-        .provider-section.hidden {
-            display: none;
-        }
-
-        .provider-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: #294863;
-            margin-bottom: 10px;
-        }
-
-        .field-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .inline-action {
-            margin-bottom: 12px;
-        }
-
-        .inline-action .btn {
-            padding: 8px 12px;
-            font-size: 12px;
-            border-radius: 9px;
-        }
-
-        .advanced-wrap {
-            border: 1px dashed #d5e2ef;
-            border-radius: 12px;
-            padding: 10px;
+        .badge {
+            min-height: 44px;
+            border-radius: 10px;
+            border: 1px solid #d5e2ef;
             background: #f8fbff;
-            margin-bottom: 12px;
+            color: #25415f;
+            padding: 11px 12px;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
         }
 
-        .advanced-wrap.hidden {
-            display: none;
+        .badge.ok {
+            border-color: rgba(31, 157, 104, 0.24);
+            background: rgba(31, 157, 104, 0.08);
+            color: var(--ok);
         }
 
-        @media (max-width: 640px) {
-            .field-row {
-                grid-template-columns: 1fr;
-            }
+        .badge.warn {
+            border-color: rgba(255, 163, 53, 0.24);
+            background: var(--warn-bg);
+            color: var(--warn);
+        }
+
+        .badge.err {
+            border-color: rgba(229, 72, 77, 0.24);
+            background: rgba(229, 72, 77, 0.08);
+            color: var(--dn);
+        }
+
+        .summary {
+            border: 1px solid #dce7f2;
+            background: #f8fbff;
+            border-radius: 12px;
+            padding: 12px 13px;
+            color: #244462;
+            font-size: 13px;
+            line-height: 1.75;
+            margin-top: 12px;
+        }
+
+        .summary.billing {
+            margin-top: 0;
+        }
+
+        .summary.setting-note {
+            margin-top: 0;
+            color: var(--muted);
+        }
+
+        .account-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #d9e8ff, #edf5ff);
+            border: 1px solid #d5e2ef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #31506d;
+            font-weight: 700;
+            overflow: hidden;
+            flex: 0 0 auto;
+            position: relative;
+        }
+
+        .avatar img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 160ms ease;
+        }
+
+        .avatar.has-image img {
+            opacity: 1;
+        }
+
+        .account-meta {
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        .account-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #183552;
+            margin-bottom: 2px;
+        }
+
+        .account-email {
+            font-size: 13px;
+            color: var(--muted);
+            word-break: break-all;
         }
 
         .btn-row {
@@ -249,20 +314,24 @@
             box-shadow: 0 10px 20px var(--ac-g);
         }
 
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 12px 24px var(--ac-g);
-        }
-
         .btn-sec {
             background: #ffffff;
             color: #314b66;
             border-color: #d5e2ef;
         }
 
-        .btn-sec:hover {
-            background: #f6f9fd;
-            border-color: #c3d6ea;
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.is-loading {
+            cursor: progress;
         }
 
         .status {
@@ -287,39 +356,13 @@
             color: var(--dn);
         }
 
-        .toggle-vis {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: var(--muted-soft);
-            cursor: pointer;
-            font-size: 16px;
-            padding: 4px;
+        .hidden {
+            display: none !important;
         }
 
-        .toggle-vis:hover {
-            color: #173453;
-        }
-
-        .input-wrap {
-            position: relative;
-        }
-
-        .notes {
-            font-size: 13px;
-            color: var(--muted);
-            line-height: 1.8;
-        }
-
-        .notes p {
-            margin-bottom: 6px;
-        }
-
-        .notes p:last-child {
-            margin-bottom: 0;
+        .status-group {
+            display: grid;
+            gap: 10px;
         }
     </style>
 </head>
@@ -327,86 +370,79 @@
 <body>
     <div class="container">
         <div class="head">
-            <p class="kicker" id="opt-kicker">Extension Settings</p>
-            <h1 id="opt-title">Onvord Voice Settings</h1>
-            <p class="subtitle" id="opt-subtitle">Configure your speech provider and credentials before recording.</p>
+            <p class="kicker" id="opt-kicker">Settings</p>
+            <h1 id="opt-title">Onvord</h1>
+            <p class="subtitle" id="opt-subtitle">管理录制语言、访问状态和订阅。</p>
         </div>
 
-        <div class="card">
-            <div class="card-title" id="opt-card-engine">Speech Provider</div>
-            <div class="field">
-                <label for="stt-provider" id="opt-label-provider">Provider</label>
-                <select id="stt-provider">
-                    <option value="deepgram">Deepgram</option>
-                    <option value="aliyun">Aliyun (Qwen ASR Realtime)</option>
-                </select>
-            </div>
-
-            <section id="provider-deepgram" class="provider-section">
-                <div class="provider-title" id="opt-dg-title">Deepgram</div>
-                <div class="field">
-                    <label for="dg-key" id="opt-label-dg-key">API Key</label>
-                    <div class="input-wrap">
-                        <input type="password" id="dg-key" placeholder="Enter your Deepgram API key">
-                        <button class="toggle-vis" data-toggle-target="dg-key" type="button" title="Show/Hide">👁️</button>
+        <div class="stack">
+            <div class="card">
+                <div class="card-title" id="opt-card-account">Account & Recovery</div>
+                <p class="card-subtitle" id="opt-card-account-subtitle">用 Google 登录绑定订阅。重装插件或换设备后，也能恢复你的权限。</p>
+                <div class="status-group">
+                    <div class="field">
+                        <label id="opt-label-account">Account</label>
+                        <div class="badge" id="account-badge">Checking account</div>
                     </div>
-                    <div class="hint" id="opt-hint-dg-key">
-                        Free signup includes $200 credit → <a href="https://console.deepgram.com/signup" target="_blank" rel="noreferrer noopener">console.deepgram.com</a>
+                    <div class="account-row">
+                        <div class="avatar" id="account-avatar">O</div>
+                        <div class="account-meta">
+                            <div class="account-name" id="account-name">Onvord</div>
+                            <div class="account-email" id="account-email">-</div>
+                        </div>
+                    </div>
+                    <div class="summary" id="account-summary">
+                        正在检查当前账号状态。
                     </div>
                 </div>
+                <div class="btn-row">
+                    <button class="btn btn-primary" id="btn-google-signin">Continue with Google</button>
+                    <button class="btn btn-sec hidden" id="btn-sign-out">Sign out</button>
+                </div>
+            </div>
+
+            <div class="card hidden" id="billing-card">
+                <div class="card-title" id="opt-card-billing">Subscription & Billing</div>
+                <p class="card-subtitle" id="opt-card-billing-subtitle">查看订阅状态、刷新权限，并在需要时管理账单。</p>
+                <div class="status-group">
+                    <div class="field">
+                        <label id="opt-label-status">Access Status</label>
+                        <div class="badge" id="access-badge">Checking status</div>
+                    </div>
+                    <div class="summary billing" id="access-summary">
+                        正在检查当前状态。
+                    </div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-sec" id="btn-refresh">Refresh</button>
+                    <button class="btn btn-sec hidden" id="btn-open-checkout">Subscribe</button>
+                    <button class="btn btn-sec hidden" id="btn-open-portal">Manage Subscription</button>
+                </div>
+            </div>
+
+            <div class="card hidden" id="recording-card">
+                <div class="card-title" id="opt-card-recording">Recording Preferences</div>
+                <p class="card-subtitle" id="opt-card-recording-subtitle">管理录制时使用的语言设置。这里不会影响你的订阅和账单。</p>
                 <div class="field">
-                    <label for="deepgram-lang" id="opt-label-dg-lang">Recognition Language</label>
-                    <select id="deepgram-lang">
+                    <label for="commercial-language" id="opt-label-language">Recording Language</label>
+                    <select id="commercial-language">
                         <option value="zh-CN">中文</option>
                         <option value="en-US">English</option>
                     </select>
-                    <div class="hint" id="opt-hint-dg-lang">Deepgram streaming requires choosing a language explicitly.</div>
                 </div>
-            </section>
-
-            <section id="provider-aliyun" class="provider-section hidden">
-                <div class="provider-title" id="opt-aliyun-title">Aliyun Qwen3-ASR-Flash-Realtime</div>
-                <div class="field">
-                    <label for="aliyun-key" id="opt-label-aliyun-key">API Key</label>
-                    <div class="input-wrap">
-                        <input type="password" id="aliyun-key" placeholder="Enter your DashScope API key">
-                        <button class="toggle-vis" data-toggle-target="aliyun-key" type="button" title="Show/Hide">👁️</button>
-                    </div>
+                <div class="summary setting-note" id="recording-note">
+                    修改后会应用到后续新的录制会话。
                 </div>
-                <div class="field-row">
-                    <div class="field">
-                        <label for="aliyun-region" id="opt-label-aliyun-region">Region</label>
-                        <select id="aliyun-region">
-                            <option value="cn">China Mainland (Beijing)</option>
-                            <option value="us">US (Virginia)</option>
-                            <option value="intl">International (Singapore)</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label for="aliyun-model" id="opt-label-aliyun-model">Model</label>
-                        <input type="text" id="aliyun-model" placeholder="qwen3-asr-flash-realtime">
-                    </div>
+                <div class="btn-row">
+                    <button class="btn btn-primary" id="btn-save">Save</button>
                 </div>
-                <div class="hint" id="opt-hint-aliyun">Official model: <code>qwen3-asr-flash-realtime</code></div>
-            </section>
-
-            <div class="btn-row">
-                <button class="btn btn-primary" id="btn-save">Save Settings</button>
-                <button class="btn btn-sec" id="btn-test">Test Connection</button>
             </div>
+
             <div class="status" id="status"></div>
         </div>
-
-        <div class="card">
-            <div class="card-title" id="opt-card-notes">Usage Notes</div>
-            <div class="notes">
-                <p id="opt-note-1">• Select one speech provider for recording.</p>
-                <p id="opt-note-2">• Deepgram requires explicit language (Chinese or English).</p>
-                <p id="opt-note-3">• All credentials are stored locally in browser storage.</p>
-                <p id="opt-note-4">• If credentials are missing, recording will not start.</p>
-            </div>
-        </div>
     </div>
+    <script src="commercial-config.js"></script>
+    <script src="commercial.js"></script>
     <script src="options.js"></script>
 </body>
 

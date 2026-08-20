@@ -16,7 +16,6 @@
     <!-- ① 待机 -->
     <div id="view-idle" class="view active">
       <div class="hero">
-        <p class="hero-kicker">BROWSER SOP RECORDER</p>
         <div class="logo-icon">
           <img src="icons/logo.png" alt="Onvord" />
         </div>
@@ -29,8 +28,19 @@
         <div class="inst"><span class="inst-n">3</span><span id="inst-3">Perform actions while explaining by voice</span></div>
         <div class="inst"><span class="inst-n">4</span><span id="inst-4">Generate SOP and share with AI</span></div>
       </div>
+      <section id="commercial-banner" class="commercial-banner hidden">
+        <div class="commercial-banner-head">
+          <h2 id="commercial-title" class="commercial-title">Start with a 7-day free trial</h2>
+          <span id="commercial-status" class="commercial-status">Trial available</span>
+        </div>
+        <p id="commercial-copy" class="commercial-copy">Connected. You can start recording now.</p>
+        <div class="commercial-banner-actions">
+          <button id="btn-commercial-checkout" class="btn btn-ghost btn-sm" type="button">Subscribe</button>
+          <button id="btn-commercial-portal" class="btn btn-ghost btn-sm" type="button">Manage Subscription</button>
+        </div>
+      </section>
       <button id="btn-start" class="btn btn-primary btn-lg"><span class="bi">⏺</span>Start Recording</button>
-      <a href="#" id="link-settings" class="settings-link">Speech Settings</a>
+      <a href="#" id="link-settings" class="settings-link">Settings</a>
     </div>
 
     <!-- ② 录制与预览（单页） -->
@@ -47,7 +57,7 @@
           <div id="rec-timer" class="rec-timer">00:00</div>
         </div>
       </div>
-      <!-- Hidden voice-box for Deepgram state (not displayed) -->
+      <!-- Hidden voice-box for STT state (not displayed) -->
       <div id="voice-box" style="display:none"></div>
       <div class="section grow">
         <h3 class="sec-title"><span id="sec-title-text">Action Log</span> <span id="ev-count" class="badge">0</span></h3>
@@ -75,6 +85,8 @@
   </div>
 
   <div id="toast" class="toast"></div>
+  <script src="commercial-config.js"></script>
+  <script src="commercial.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 

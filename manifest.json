@@ -1,12 +1,14 @@
 {
   "manifest_version": 3,
   "name": "Onvord",
-  "version": "0.1.0",
-  "description": "录制浏览器操作与语音讲解，生成 AI 可执行的 SOP",
+  "version": "0.5.19",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvEjqSeZ1J5CySPaW14d9gtHCEVfEb80cAW0ojcCe0YwT1F8BJtUFhSIrBjeF3e4qIX7eElpTzZlq69QvPVvnnqdon0xppd5K/IemPI/xws1Sni+u4wz0tGtELMeo/vlamtXNwdeu8y8wOOyB/2G1fC57qXP9C0g44xs5G/u+h1oQ7t5nk4BMCr03uBBT+7ipi3nEzWPh3NS3via3tGduO1H8AiUwD/YbK4MlbGo5UOqZlIMjUxvsMuMrX5v72k2ws7OP1J46J+mKTewFjH8Np4KAkRY3obseJ8qqgf/mR/uRBk9YViN5awUkobi9Sh4AE8MLt6w23sL5VzHJSuouEwIDAQAB",
+  "description": "Onvord：通过官方托管语音，录制浏览器操作并生成 AI 可执行的 SOP",
   "permissions": [
     "activeTab",
     "scripting",
     "sidePanel",
+    "identity",
     "clipboardWrite",
     "offscreen",
     "storage",

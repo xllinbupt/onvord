@@ -21,7 +21,7 @@
 
 The generated SOP is both **human-friendly** (rich screenshots, clear steps) and **AI-ready** (precise CSS selectors and action semantics that AI agents can execute).
 
-> This directory is the **Onvord open-source edition (OSS)**. You bring your own speech API credentials.
+This repository contains the complete Chrome extension client from the former commercial `0.5.19` build, now open-sourced under the MIT License.
 
 > 🎯 **In one sentence**: Do it once, let AI do it a thousand times.
 
@@ -30,10 +30,9 @@ The generated SOP is both **human-friendly** (rich screenshots, clear steps) and
 ## Features
 
 ### 🎙️ Real-time Speech-to-Text
-- Supports self-configured **Deepgram** and **Aliyun Qwen Realtime ASR**
+- Powered by **hosted Aliyun realtime speech** in the open-source client
 - Current recognition options: **Chinese (zh-CN)** and **English (en-US)**
-- Voice narration is auto-linked to action steps (non-meaningful text is filtered out)
-- Provider credentials stay only in your local browser storage
+- End users never need to paste a third-party API key; narration is auto-linked to action steps
 
 ### 🖱️ Smart Action Capture
 - Automatically records clicks, inputs, scrolls, and page navigation
@@ -60,14 +59,13 @@ The generated SOP is both **human-friendly** (rich screenshots, clear steps) and
 ## Recent Updates (2026-03)
 
 - Refreshed extension icon assets: `icons/icon16.png`, `icons/icon48.png`, `icons/icon128.png`, `icons/logo.png`
-- The OSS edition now supports self-configured `Deepgram` and `Aliyun Qwen Realtime ASR`
+- The open-source client now uses hosted Aliyun speech by default, with no manual API key setup
 - Recording and preview were unified into one timeline page
 - Sidebar wording was updated to "Execution Details (For Agent)"
 - Voice placeholder changed from line marks to `识别中`
 - Action pills now support inline screenshot thumbnails with click-to-zoom
 - Unrecognized / non-meaningful speech text (for example `...` or punctuation-only) is no longer shown in timeline/preview
 - Scroll actions are filtered by PRD rules and merged in live timeline (for example `Scroll xN`)
-- The Aliyun realtime path now has a safer stop flow plus `AudioWorklet` capture fallback
 
 ---
 
@@ -94,12 +92,11 @@ The generated SOP is both **human-friendly** (rich screenshots, clear steps) and
 3. Enable "Developer mode"
 4. Click "Load unpacked" → Select the project folder
 
-### 2. Configure Speech Recognition
+### 2. Connect to the Hosted Service
 
-1. Choose one provider: `Deepgram` or `Aliyun Qwen Realtime ASR`
-2. Prepare the corresponding API key
-3. Open the settings page (sidebar "Settings" link or the extension options page)
-4. Paste your key → Test connection → Save
+1. On first launch, the sidebar auto-registers the device with the official backend
+2. The client automatically fetches the temporary speech session needed for the current recording
+3. If the service is unavailable, open the settings page to inspect status and reconnect
 
 ### 3. Start Recording
 
@@ -112,6 +109,15 @@ The generated SOP is both **human-friendly** (rich screenshots, clear steps) and
 
 ---
 
+## Open-source Scope and Hosted Services
+
+- This repository open-sources the **Onvord Chrome extension client**, including recording, timeline, screenshots, export, account, and subscription UI code.
+- The client connects to `https://api.onvord.com` by default for device sessions, accounts, subscription status, and temporary speech credentials. That hosted service and third-party services are outside this repository and are not covered by this repository's MIT License.
+- This repository is **not yet a complete self-hosted stack**. A compatible backend must implement the endpoints called by `commercial.js`; a reference server implementation is not included yet.
+- Existing `commercial*` identifiers are retained for compatibility with current users' local data and API integrations; the client source itself is open source.
+
+---
+
 ## Architecture
 
 ```
@@ -121,39 +127,33 @@ The generated SOP is both **human-friendly** (rich screenshots, clear steps) and
 │ content.js   │ sidepanel.js │ background.js │
 │ · Capture    │ · Unified    │ · State       │
 │   actions    │   timeline UI│   management  │
-│ · Element    │ · Speech STT │ · SOP         │
-│   describe   │              │   generation  │
+│ · Element    │ · Hosted     │ · SOP         │
+│   describe   │   speech STT │   generation  │
 │ · Event      │ · HTML       │ · Screenshot  │
 │   filtering  │   export     │   annotation  │
 └──────────────┴──────────────┴───────────────┘
          │                          │
-    ┌───────────────┐         ┌──────┴──────┐
-    │ Deepgram /    │         │ Offscreen   │
-    │ Aliyun STT    │         │ Canvas      │
-    │ WebSocket API │         │ (Annotate)  │
-    └───────────────┘         └─────────────┘
+    ┌────┴────┐              ┌──────┴──────┐
+    │ Cloudflare│            │ Offscreen   │
+    │ Worker API│            │ Canvas      │
+    │ + Aliyun  │            │ (Annotate)  │
+    └──────────┘              └─────────────┘
 ```
-
-- **content.js** — injected into pages to capture user actions (clicks, inputs, text selection)
-- **sidepanel.js** — sidebar UI, unified recording/preview timeline, Deepgram / Aliyun speech recognition, SOP export
-- **background.js** — service worker for recording state, SOP generation, and screenshot annotation
-- **annotate.js** — offscreen document for marking click positions on screenshots
-- **aliyun-pcm-worklet.js** — PCM capture worklet used by the Aliyun realtime path
 
 ---
 
 ## Privacy & Security
 
-- 🔒 **API Key stored locally** — Only in `chrome.storage.local`, never uploaded
-- 🔒 **Voice data** — Sent directly to your selected provider (Deepgram or Aliyun); Onvord stores no audio
+- 🔒 **No user API key required** — The client only stores device/session state locally
+- 🔒 **Voice data** — The hosted flow provisions a speech session and then connects to Aliyun realtime speech
 - 🔒 **Screenshots** — Processed entirely in your browser, never leave your machine
-- 🔒 **Open source** — Full source code available for audit
+- 🔒 **Open-source client** — The extension client is available for audit; see the hosted-service boundary above
 
 ---
 
 ## Roadmap
 
-- [x] Real-time speech-to-text (Deepgram / Aliyun)
+- [x] Real-time speech-to-text (hosted Aliyun)
 - [x] Smart action capture & filtering
 - [x] Screenshot click-position annotation
 - [x] Hybrid timeline (narration blocks + action pills)
@@ -171,11 +171,19 @@ The generated SOP is both **human-friendly** (rich screenshots, clear steps) and
 
 Issues and Pull Requests are welcome!
 
+Run this check before submitting a change:
+
+```bash
+npm run check
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and manual smoke-test checklist.
+
 ---
 
 ## License
 
-MIT License
+[MIT License](LICENSE)
 
 ---
 

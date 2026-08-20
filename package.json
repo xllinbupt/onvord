@@ -1,0 +1,13 @@
+{
+  "name": "onvord",
+  "version": "0.5.19",
+  "private": true,
+  "description": "Record browser actions and voice narration to generate AI-executable SOPs.",
+  "license": "MIT",
+  "scripts": {
+    "check": "node scripts/verify.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

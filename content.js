@@ -103,14 +103,6 @@
     return IS_ZH ? `「${text}」` : `"${text}"`;
   }
 
-  function cleanLabelText(text) {
-    return String(text == null ? '' : text)
-      .replace(/\s+/g, ' ')
-      .replace(/\s*\*+\s*/g, ' ')
-      .trim()
-      .substring(0, 30);
-  }
-
   const TAG_NAMES = IS_ZH ? {
     a: '链接', button: '按钮', input: '输入框', textarea: '文本框', select: '下拉框',
     img: '图片', video: '视频', audio: '音频', label: '标签',
@@ -155,58 +147,6 @@
       if (node.nodeType === Node.TEXT_NODE) text += node.textContent;
     }
     return text.trim();
-  }
-
-  function extractLabelText(labelEl) {
-    if (!labelEl) return '';
-
-    const preferred = labelEl.querySelector('.field-label, .form-label, .label, .input-label');
-    if (preferred) {
-      const preferredText = cleanLabelText(preferred.textContent || '');
-      if (preferredText) return preferredText;
-    }
-
-    let text = '';
-    for (const node of labelEl.childNodes) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        text += ' ' + node.textContent;
-        continue;
-      }
-      if (node.nodeType !== Node.ELEMENT_NODE) continue;
-      const tag = node.tagName.toLowerCase();
-      if (['input', 'textarea', 'select', 'button', 'option'].includes(tag)) continue;
-      text += ' ' + node.textContent;
-    }
-
-    return cleanLabelText(text);
-  }
-
-  function getAssociatedLabel(el) {
-    if (!el) return '';
-
-    try {
-      const labels = Array.from(el.labels || []);
-      for (const labelEl of labels) {
-        const text = extractLabelText(labelEl);
-        if (text) return text;
-      }
-    } catch {}
-
-    try {
-      const wrapped = el.closest?.('label');
-      const wrappedText = extractLabelText(wrapped);
-      if (wrappedText) return wrappedText;
-    } catch {}
-
-    if (el.id) {
-      try {
-        const explicit = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
-        const explicitText = extractLabelText(explicit);
-        if (explicitText) return explicitText;
-      } catch {}
-    }
-
-    return '';
   }
 
   /* ── Find the most meaningful element (walk up if needed) ── */
@@ -260,12 +200,8 @@
     const tag = el.tagName.toLowerCase();
     const role = el.getAttribute('role') || '';
 
-    const explicitLabel = getAssociatedLabel(el)
-      || el.getAttribute('aria-label')
-      || el.getAttribute('placeholder')
-      || el.getAttribute('title')
-      || el.getAttribute('alt')
-      || '';
+    const explicitLabel = el.getAttribute('aria-label') || el.getAttribute('placeholder')
+      || el.getAttribute('title') || el.getAttribute('alt') || '';
     if (explicitLabel.trim()) {
       const label = explicitLabel.trim().substring(0, 30);
       const friendly = TAG_NAMES[tag];
@@ -542,7 +478,6 @@
   const onInput = debounce(function (e) {
     if (!isRecording || isPaused) return;
     const t = e.target;
-    if (t?.tagName?.toLowerCase() === 'select') return;
     let val = (t.value || t.textContent || '').substring(0, 200);
     if (!val.trim()) return;
 
@@ -565,33 +500,6 @@
       value: val
     });
   }, 500);
-
-  function onChange(e) {
-    if (!isRecording || isPaused) return;
-
-    const t = e.target;
-    if (!t || t.tagName?.toLowerCase() !== 'select') return;
-
-    const optionText = (t.selectedOptions?.[0]?.textContent || '').replace(/\s+/g, ' ').trim();
-    const rawValue = String(t.value || '').replace(/\s+/g, ' ').trim();
-    const displayValue = (optionText || rawValue).substring(0, 200);
-    if (!displayValue) return;
-
-    const selectorInfo = getSelectorWithConfidence(t);
-    send({
-      actionType: 'select',
-      target: {
-        tag: t.tagName.toLowerCase(),
-        selector: selectorInfo.selector,
-        xpath: selectorInfo.xpath,
-        selector_confidence: selectorInfo.selector_confidence,
-        description: describeElement(t) || TAG_NAMES.select || 'Select',
-        rect: rect(t)
-      },
-      value: displayValue,
-      rawValue: rawValue.substring(0, 200) || null
-    });
-  }
 
   /* ── Keypress Handler ── */
   function onKeyDown(e) {
@@ -640,7 +548,6 @@
     if (!listenersAttached) {
       document.addEventListener('mouseup', onMouseUp, true);
       document.addEventListener('input', onInput, true);
-      document.addEventListener('change', onChange, true);
       document.addEventListener('keydown', onKeyDown, true);
       window.addEventListener('scroll', handleScroll, { passive: true });
       listenersAttached = true;
@@ -656,7 +563,6 @@
     if (listenersAttached) {
       document.removeEventListener('mouseup', onMouseUp, true);
       document.removeEventListener('input', onInput, true);
-      document.removeEventListener('change', onChange, true);
       document.removeEventListener('keydown', onKeyDown, true);
       window.removeEventListener('scroll', handleScroll);
       listenersAttached = false;
